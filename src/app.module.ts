@@ -10,6 +10,7 @@ import configuration from './config/configuration';
 import { HttpModule } from '@nestjs/axios';
 import { AuthModule } from './modules/auth/auth.module';
 import { IsUniqueConstraint } from './shared/validation/is-unique-constraint.validation';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -32,11 +33,12 @@ import { IsUniqueConstraint } from './shared/validation/is-unique-constraint.val
       username: 'postgres',
       password: 'superpower',
       database: 'new',
-      entities: [__dirname + '/modules/**/*.entity{.ts,.js}'],
+      // entities: [__dirname + '/modules/**/*.entity{.ts,.js}'],
       // migrations: [__dirname + '/database/migrations/*{.ts,.js}'],
       // migrationsRun: true,
-      synchronize: true,  
-    })
+      // synchronize: false,  
+    }),
+    ScheduleModule.forRoot()
   ],
   controllers: [AppController],
   providers: [AppService, IsUniqueConstraint],

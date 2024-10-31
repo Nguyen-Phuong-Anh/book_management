@@ -40,7 +40,7 @@ export class BookController {
     async findOneBook(@Param('id') id: number) {
         const book = await this.bookService.findOneBook(id)
         return {
-            data: book
+            data: [book]
         }
     }
 
@@ -52,7 +52,7 @@ export class BookController {
     @ApiResponse({ status: 200, description: 'List of books returned successfully'})
     async findAll(
         @Query('page') page: number = 1,
-        @Query('per_page') per_page: number = 108
+        @Query('per_page') per_page: number = 10
     ) {
         const isCacheable = this.reflector.get<boolean>('isCacheable', BookController.prototype.findAll);
         per_page = per_page > 100 ? 100 : per_page;
@@ -103,7 +103,7 @@ export class BookController {
     async update(@Param('id') id: number, @Body() updateBookDto: UpdateBookDto) {
         const updatedBook = await this.bookService.update(id, updateBookDto)
         return {
-            data: updatedBook
+            data: [updatedBook]
         }
     }
 
