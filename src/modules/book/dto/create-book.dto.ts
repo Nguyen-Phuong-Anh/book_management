@@ -28,4 +28,10 @@ export class CreateBookDto {
     @IsNotEmpty()
     @ApiProperty({type: Number, description: 'The category id of the book'})
     categoryId: number
+
+    @IsNumber()
+    @IsPositive()
+    @IsNotEmpty()
+    @ApiProperty({type: Number, description: 'The category id of the book'})
+    numberOfCopy: number
 }

@@ -28,4 +28,10 @@ export class UpdateBookDto {
     @IsOptional()
     @ApiProperty({type: Number, description: 'The category id of the book'})
     categoryId?: number
+
+    @IsNumber()
+    @IsPositive()
+    @IsOptional()
+    @ApiProperty({type: Number, description: 'The category id of the book'})
+    numberOfCopy: number
 }

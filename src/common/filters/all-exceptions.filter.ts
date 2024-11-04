@@ -6,7 +6,6 @@ export class AllExceptionsFilter<T> implements ExceptionFilter {
     const ctx = host.switchToHttp()
     const res = ctx.getResponse()
     const req = ctx.getRequest<Request>()
-    let message = (exception as any).message.message;
 
     const status = exception instanceof HttpException ? exception.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR
 

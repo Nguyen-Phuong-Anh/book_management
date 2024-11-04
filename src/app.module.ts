@@ -10,21 +10,23 @@ import configuration from './config/configuration';
 import { HttpModule } from '@nestjs/axios';
 import { AuthModule } from './modules/auth/auth.module';
 import { IsUniqueConstraint } from './shared/validation/is-unique-constraint.validation';
+import { ScheduleModule } from '@nestjs/schedule';
+import { RentalModule } from './modules/rental/rental.module';
+import { RentalPaymentModule } from './modules/rental-payment/rental-payment.module';
 
 @Module({
   imports: [
     UserModule,
     BookModule,
     CategoryModule,
+    RentalModule,
+    RentalPaymentModule,
     AuthModule,
     HttpModule,
     ConfigModule.forRoot({
       isGlobal: true,
       load: [configuration]
-    }),
-    BookModule, 
-    CategoryModule, 
-    UserModule,
+    }), 
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: 'localhost',
@@ -36,7 +38,8 @@ import { IsUniqueConstraint } from './shared/validation/is-unique-constraint.val
       // migrations: [__dirname + '/database/migrations/*{.ts,.js}'],
       // migrationsRun: true,
       synchronize: true,  
-    })
+    }),
+    ScheduleModule.forRoot()
   ],
   controllers: [AppController],
   providers: [AppService, IsUniqueConstraint],

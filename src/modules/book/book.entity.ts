@@ -24,4 +24,7 @@ export class Book {
     @ManyToOne(() => Category, (category) => category.books, { cascade: true})
     @JoinColumn({ name: 'categoryId'})
     category: Category
+
+    @Column()
+    numberOfCopy: number
 }
