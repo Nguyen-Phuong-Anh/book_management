@@ -1,8 +1,9 @@
-import { Column, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { BookItem } from "../book/book-item.entity";
 import { RentalStatus } from "src/common/enum/rental-status.enum";
 import { User } from "../user/user.entity";
 
+@Entity()
 export class Rental {
     @PrimaryGeneratedColumn()
     id: number
@@ -10,7 +11,7 @@ export class Rental {
     @Column()
     userId: number
 
-    @Column()
+    @Column({ type: 'jsonb', nullable: false})
     books: BookItem[]
 
     @Column()
@@ -19,7 +20,7 @@ export class Rental {
     @Column()
     dueDate: Date
 
-    @Column()
+    @Column({ nullable: true })
     returnDate: Date
 
     @Column({

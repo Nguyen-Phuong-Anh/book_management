@@ -1,10 +1,12 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, Req, SetMetadata, UseGuards } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { RentalPaymentService } from './rental-payment.service';
 import { api_ver1 } from 'src/shared/constants';
 import { CreateRentalPaymentDto } from './dto/createRentalPaymentDto.dto';
-import { UpdateRentalDto } from '../rental/dto/update-rental.dto';
-import { RentalChargeDto } from '../rental/dto/rental-charge.dto';
+import { Roles } from 'src/common/decorators/role.decorator';
+import { Role } from 'src/common/enum/role.enum';
+import { RoleGuard } from 'src/common/guard/role.guard';
+import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse } from '@nestjs/swagger';
 
 @Controller('rental-payments')
 export class RentalPaymentController {
@@ -13,15 +15,30 @@ export class RentalPaymentController {
         private readonly rentalPaymentService: RentalPaymentService
     ) {}
 
+    @Roles(Role.Librarian)
+    @UseGuards(RoleGuard)
+    @SetMetadata('isCacheable', true)
     @Get('/:id')
-    async findOneRental(@Param('id') id: number) {
+    @ApiOperation({ summary: "Find rental payment with the given id"})
+    @ApiParam({ name: 'id', type: Number, description: 'the ID of the rental payment'})
+    @ApiResponse({ status: 200, description: 'Rental payment returned successfully'})
+    async findOneRentalPayment(
+        @Param('id') id: number
+    ) {
         const rental = await this.rentalPaymentService.findOneRentalPayment(id)
         return {
             data: [rental]
         }
     }
 
+    @Roles(Role.Librarian)
+    @UseGuards(RoleGuard)
+    @SetMetadata('isCacheable', true)
     @Get()
+    @ApiOperation({ summary: "Find all rental payments"})
+    @ApiQuery({ name: 'page', type: Number, description: 'The current page', required: false})
+    @ApiQuery({ name: 'per_page', type: Number, description: 'The page size', required: false})
+    @ApiResponse({ status: 200, description: 'List of rental payments returned successfully'})
     async findAll(
         @Query('page') page: number = 1,
         @Query('per_page') per_page: number = 10
@@ -51,12 +68,16 @@ export class RentalPaymentController {
         }
     }
 
+    @Roles(Role.Librarian)
+    @UseGuards(RoleGuard)
     @Post()
+    @ApiBody({ type: CreateRentalPaymentDto})
+    @ApiOperation({ summary: "Create a new rental payment"})
+    @ApiResponse({ status: 201, description: 'Created rental payment successfully'})
     async create(
-        @Body() rentalChargeDto: RentalChargeDto,
         @Body() createRentalPaymentDto: CreateRentalPaymentDto,
     ) {
-        const rentalPayment = await this.rentalPaymentService.create(rentalChargeDto, createRentalPaymentDto)
+        const rentalPayment = await this.rentalPaymentService.create(createRentalPaymentDto)
         return {
             data: [rentalPayment]
         }

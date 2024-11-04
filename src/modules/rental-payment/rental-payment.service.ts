@@ -3,7 +3,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { RentalPayment } from './rental-payment.entity';
 import { Repository } from 'typeorm';
 import { CreateRentalPaymentDto } from './dto/createRentalPaymentDto.dto';
-import { RentalChargeDto } from '../rental/dto/rental-charge.dto';
 
 @Injectable()
 export class RentalPaymentService {
@@ -20,6 +19,7 @@ export class RentalPaymentService {
             })
             return { rentalPayments, total }
         } catch (error) {
+            console.log(error)
             throw new InternalServerErrorException('Failed to retrieve rental payments');
         }
     }
@@ -32,11 +32,12 @@ export class RentalPaymentService {
         return rental
     }
 
-    async create(rentalChargeDto: RentalChargeDto, createRentalPaymentDto: CreateRentalPaymentDto) {
+    async create(createRentalPaymentDto: CreateRentalPaymentDto) {
         const paymentDate = new Date()
-        const amount = (rentalChargeDto.fee - rentalChargeDto.discountApplied) + rentalChargeDto.fine
+        const amount = (createRentalPaymentDto.fee - createRentalPaymentDto.discountApplied) + createRentalPaymentDto.fine
+        const { fee, discountApplied, fine, ...rentalPayment} = createRentalPaymentDto
         const rental = this.rentalPaymentRepository.create({
-            ...createRentalPaymentDto,
+            ...rentalPayment,
             paymentDate: paymentDate,
             amount: amount
         })

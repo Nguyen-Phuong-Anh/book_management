@@ -1,7 +1,8 @@
-import { Column, JoinColumn, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import { User } from "../user/user.entity";
 import { Rental } from "../rental/rental.entity";
 
+@Entity()
 export class RentalPayment {
     @PrimaryGeneratedColumn()
     id: number
@@ -25,6 +26,6 @@ export class RentalPayment {
     librarian: User
 
     @OneToOne(() => Rental, rental => rental.id)
-    @JoinColumn({ name: 'librarianId'})
+    @JoinColumn({ name: 'rentalId'})
     rental: Rental
 }

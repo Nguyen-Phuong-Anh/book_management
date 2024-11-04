@@ -10,7 +10,7 @@ import { useContainer } from 'class-validator';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.setGlobalPrefix(api_ver1)
-  app.useGlobalFilters(new AllExceptionsFilter())
+  // app.useGlobalFilters(new AllExceptionsFilter())
   app.useGlobalInterceptors(new SuccessResponseInterceptorInterceptor())
   app.useGlobalPipes(new ValidationPipe({ 
     transform: true

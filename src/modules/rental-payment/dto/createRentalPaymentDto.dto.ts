@@ -1,11 +1,21 @@
-import { IsDateString, IsNotEmpty, IsNumber, IsPositive, IsString } from "class-validator"
+import { IsNotEmpty, IsNumber, IsPositive } from "class-validator"
 
 export class CreateRentalPaymentDto {
-    @IsString()
+    @IsNumber()
     @IsNotEmpty()
     librarianId: number
 
-    @IsString()
+    @IsNumber()
     @IsNotEmpty()
     rentalId: number
+
+    @IsNumber()
+    fee: number
+
+    @IsNumber()
+    discountApplied: number
+
+    @IsNumber()
+    @IsPositive()
+    fine: number
 }

@@ -7,6 +7,7 @@ import { UpdateRentalDto } from './dto/update-rental.dto';
 import { RentalStatus } from 'src/common/enum/rental-status.enum';
 import { Book } from '../book/book.entity';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { Role } from 'src/common/enum/role.enum';
 
 @Injectable()
 export class RentalService {
@@ -16,31 +17,44 @@ export class RentalService {
         private readonly dataSource: DataSource
     ) { }
 
-    async findAll(page: number, per_page: number) {
+    async findAll(userId: number, roles: string[], page: number, per_page: number) {
         try {
-            const [rentals, total] = await this.rentalRepository.findAndCount({
-                skip: (page - 1) * per_page,
-                take: per_page
-            })
-            return { rentals, total }
+            if(roles.includes(Role.Librarian)) {
+                const [rentals, total] = await this.rentalRepository.findAndCount({
+                    skip: (page - 1) * per_page,
+                    take: per_page
+                })
+                return { rentals, total }
+            } else {
+                const [rentals, total] = await this.rentalRepository
+                .findAndCount({
+                    where: { userId },
+                    skip: (page - 1) * per_page,
+                    take: per_page
+                })
+                return { rentals, total }
+            }
         } catch (error) {
+            console.log(error)
             throw new InternalServerErrorException('Failed to retrieve rentals');
         }
     }
 
-    async findOneRental(id: number): Promise<Rental> {
-        const rental = await this.rentalRepository.findOneBy({ id })
+    async findOneRental(userId: number, roles: string[], id: number): Promise<Rental> {
+        let rental;
+        if(roles.includes(Role.Librarian)) {
+            rental = await this.rentalRepository.findOne({ where: {id} })
+        } else 
+            rental = await this.rentalRepository.findOne({ where: {userId, id} })
         if (!rental) {
-            throw new NotFoundException(`Not found rental with id ${id}`)
+            throw new NotFoundException(`Not found rental with id ${id} or userId not matched`)
         }
         return rental
     }
 
     async create(discountRate: number, createRentalDto: CreateRentalDto) {
         const currentDate = new Date()
-        const creationDateMs = currentDate.getTime();
-        const dueDateMs = createRentalDto.dueDate.getTime();
-        const differenceMs = dueDateMs - creationDateMs;
+        const differenceMs = new Date(createRentalDto.dueDate).getTime() - currentDate.getTime();
         const days = Math.floor(differenceMs / (1000 * 60 * 60 * 24));
 
         let fee = 0
@@ -48,18 +62,36 @@ export class RentalService {
             fee = parseInt(process.env.RENTAL_FEE) * (days - 3)
         }
 
-        const discountApplied = discountRate * fee
+        const discountApplied = discountRate/100 * fee
 
         const rental = this.rentalRepository.create({
             ...createRentalDto,
             creationDate: currentDate,
             fee: fee,
             discountApplied: discountApplied
-        })        
+        })     
+        
         try {
-            return await this.rentalRepository.save(rental)
+            await this.dataSource.transaction(async (transactionalEntityManager) => {
+                for (const bookItem of rental.books) {
+                    const result = await transactionalEntityManager
+                        .createQueryBuilder()
+                        .update(Book)
+                        .set({ numberOfCopy: () => `numberOfCopy - ${bookItem.quantity}` })
+                        .where("id = :id", { id: bookItem.id })
+                        .execute();
+    
+                    if (result.affected === 0) {
+                        throw new Error(`Book with id ${bookItem.id} not found or has insufficient quantity`);
+                    }
+                }
+    
+                await transactionalEntityManager.save(Rental, rental);
+            });
+
+            return rental;
         } catch (error) {
-            throw new InternalServerErrorException('Failed to create rental')
+            throw new InternalServerErrorException(error)
         }
     }
 
@@ -68,13 +100,23 @@ export class RentalService {
         if (!rental) {
             throw new NotFoundException(`Rental with ID ${id} not found`)
         }
-        if(rental.status !== RentalStatus.Pending && (updateRentalDto?.dueDate || updateRentalDto?.returnDate)) {
+        if(updateRentalDto?.dueDate && rental.status !== RentalStatus.Pending) {
             throw new Error('Warning: cannot modify the date if the status is not pending')
         }
+        let fine = 0
+        if(updateRentalDto?.returnDate) {
+            const differenceMs = new Date(updateRentalDto.returnDate).getTime() - new Date(rental.dueDate).getTime();
+            const days = Math.floor(differenceMs / (1000 * 60 * 60 * 24));
+            fine = Number(process.env.FINE_PER_DAY) * days
+        }
         try {
-            Object.assign(rental, updateRentalDto)
-            return this.rentalRepository.save(rental)
+            Object.assign(rental, {
+                ...updateRentalDto,
+                fine: fine
+            })
+            return await this.rentalRepository.save(rental)
         } catch (error) {
+            console.log(error)
             throw new InternalServerErrorException('Failed to update rental')
         }
     }
@@ -84,52 +126,48 @@ export class RentalService {
         if (!rental) {
             throw new NotFoundException(`Rental with ID ${id} not found`)
         }
-        try {
-            await this.rentalRepository.delete(id)
-            for (const bookItem of rental.books) {
-                const result = await this.dataSource
-                    .createQueryBuilder()
-                    .update(Book)
-                    .set({ quantity: () => `quantity + ${bookItem.quantity}` })
-                    .where("id = :id", { id: bookItem.id })
-                    .execute();
+        for (const bookItem of rental.books) {
+            const result = await this.dataSource
+                .createQueryBuilder()
+                .update(Book)
+                .set({ numberOfCopy: () => `numberOfCopy + ${bookItem.quantity}` })
+                .where("id = :id", { id: bookItem.id })
+                .execute();
 
-                if (result.affected === 0) {
-                    throw new Error(`Book with id ${bookItem.id} not found or has insufficient quantity`);
-                }
+            if (result.affected === 0) {
+                throw new Error(`Book with id ${bookItem.id} not found or has insufficient quantity`);
             }
-
-        } catch (error) {
-            throw new InternalServerErrorException('Failed to delete rental')
         }
+        await this.rentalRepository.delete(id)
+        
     }
 
     @Cron(CronExpression.EVERY_30_SECONDS)
     async updateOverdueRentals(): Promise<void> {
-        const today = new Date();
-    
         await this.dataSource
             .createQueryBuilder()
             .update(Rental)
             .set({ status: RentalStatus.Overdue })
-            .where("DATE_ADD(startDate, INTERVAL duration DAY) < :today", { today: today.toISOString() })
+            .where("dueDate < :currentDate", { currentDate: new Date() })
             .andWhere("status != :overdueStatus", { overdueStatus: RentalStatus.Overdue })
             .execute();
-        
+
         console.log('updating...')
     }
 
-    @Cron(CronExpression.EVERY_30_SECONDS)
-    async updateOverdueFine(): Promise<void> {
-        const finePerDay = process.env.FINE_PER_DAY;
+    // @Cron(CronExpression.EVERY_30_SECONDS)
+    // async updateOverdueFine(): Promise<void> {
+    //     const finePerDay = process.env.FINE_PER_DAY;
 
-        await this.dataSource
-            .createQueryBuilder()
-            .update(Rental)
-            .set({
-                fine: () => `DATEDIFF(returnDate, dueDate) * ${finePerDay}`
-            })
-            .where("overdueDate IS NOT NULL AND DATEDIFF(returnDate, dueDate) > 0")
-            .execute();
-    }
+    //     await this.dataSource
+    //         .createQueryBuilder()
+    //         .update(Rental)
+    //         .set({
+    //             fine: () => `EXTRACT(DAY FROM (returnDate - dueDate)) * ${finePerDay}`
+    //         })
+    //         .where("dueDate IS NOT NULL AND (returnDate - dueDate) > INTERVAL '0 days'")
+    //         .execute();
+        
+    //     console.log('update fine...')
+    // }
 }
