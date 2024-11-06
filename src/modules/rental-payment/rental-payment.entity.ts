@@ -1,4 +1,4 @@
-import { Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, JoinColumn, ManyToOne, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import { User } from "../user/user.entity";
 import { Rental } from "../rental/rental.entity";
 
@@ -21,7 +21,7 @@ export class RentalPayment {
     })
     amount: number
 
-    @OneToOne(() => User, user => user.id)
+    @ManyToOne(() => User, user => user.id)
     @JoinColumn({ name: 'librarianId'})
     librarian: User
 

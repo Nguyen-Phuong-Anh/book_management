@@ -62,7 +62,7 @@ export class CategoryService {
         try {
             await this.categoryRepository.delete(id)
         } catch (error) {
-            throw new InternalServerErrorException('Failed to delete book')
+            throw new InternalServerErrorException('Failed to delete category')
         }
     }
 }

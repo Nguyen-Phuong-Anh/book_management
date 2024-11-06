@@ -100,15 +100,35 @@ export class RentalService {
         if (!rental) {
             throw new NotFoundException(`Rental with ID ${id} not found`)
         }
+
         if(updateRentalDto?.dueDate && rental.status !== RentalStatus.Pending) {
             throw new Error('Warning: cannot modify the date if the status is not pending')
         }
+        
+        if(updateRentalDto?.dueDate) {
+            const differenceMs = new Date(updateRentalDto.dueDate).getTime() - rental.creationDate.getTime();
+            const days = Math.floor(differenceMs / (1000 * 60 * 60 * 24));
+
+            let fee = 0
+            if(days > 3) {
+                fee = parseInt(process.env.RENTAL_FEE) * (days - 3)
+            }
+
+            rental.fee = fee
+        }
+        
         let fine = 0
         if(updateRentalDto?.returnDate) {
-            const differenceMs = new Date(updateRentalDto.returnDate).getTime() - new Date(rental.dueDate).getTime();
+            let dueDate = updateRentalDto?.dueDate ? updateRentalDto?.dueDate : rental.dueDate
+            const differenceMs = new Date(updateRentalDto.returnDate).getTime() - new Date(dueDate).getTime();
             const days = Math.floor(differenceMs / (1000 * 60 * 60 * 24));
             fine = Number(process.env.FINE_PER_DAY) * days
         }
+
+        if(updateRentalDto?.books) {
+            rental.books = [...rental.books, ...updateRentalDto.books]
+        }
+
         try {
             Object.assign(rental, {
                 ...updateRentalDto,
@@ -152,7 +172,7 @@ export class RentalService {
             .andWhere("status != :overdueStatus", { overdueStatus: RentalStatus.Overdue })
             .execute();
 
-        console.log('updating...')
+        console.log('updating overdue rental')
     }
 
     // @Cron(CronExpression.EVERY_30_SECONDS)

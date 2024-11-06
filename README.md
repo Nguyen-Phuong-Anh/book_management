@@ -1,85 +1,182 @@
 <p align="center">
   <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
+  <h1>BOOK MANAGEMENT SYSTEM</h1>
+  <p>This project is a Book Management System API built using NestJS with TypeORM as the ORM, and PostgreSQL as the database. It provides functionalities for managing books, rentals, memberships, and users.</p>
 </p>
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+## Features
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+- User Authentication and Authorization with role-based access (e.g., Admin, Librarian, Member)
+- CRUD Operations for managing books, rentals, and memberships.
+- Rental Management with due date tracking and fine calculation for overdue rentals.
+- Membership Management with automated membership expiration handling using scheduled tasks
+- Role-based Access Control for restricting access to different API endpoints.
 
-## Description
+## Prerequisites
+Make sure you have the following installed on your machine:
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- Node.js (version 16+)
+- npm or yarn
+- PostgreSQL (version 12+)
 
-## Project setup
-
+## Getting Started
+- Clone the repository
 ```bash
-$ npm install
+$ git clone https://github.com/your-username/book-management-system.git
+$ cd book-management-system
 ```
-
-## Compile and run the project
-
+- Install dependencies
 ```bash
 # development
-$ npm run start
+# Using npm
+$ npm install
 
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+# Or using yarn
+$ yarn install
 ```
 
-## Run tests
-
+- Configure Environment Variables
+Create a .env file in the project root and define the following variables:
 ```bash
-# unit tests
-$ npm run test
+# Database
+$ DB_HOST=localhost
+$ DB_PORT=5432
+$ DB_USERNAME=your_db_username
+$ DB_PASSWORD=your_db_password
+$ DB_NAME=book_management
 
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+# Server
+$ PORT=3000
+```
+- Set Up the Database
+Create the database in PostgreSQL:
+```bash
+$ CREATE DATABASE book_management;
+```
+- Run Migrations: Migrations are used to set up the initial database schema.
+```bash
+$ npm run migration:run
 ```
 
-## Resources
+- Run the Application
+To start the application in development mode:
+```bash
+$ npm run start:dev
+```
+The server should now be running at http://localhost:3000.
 
-Check out a few resources that may come in handy when working with NestJS:
+## Project Structure
+```bash
+book-management-system/
+├── src/
+│   ├── common/                     # Common utilities
+│   │   ├── decorators/               # Custom decorators
+│   │   ├── enum/                     # Custom enum
+│   │   ├── filters/                  # Custom filters
+│   │   ├── guards/                   # Custom guards
+│   │   │   ├── roles.guard.ts        # Role guard for access control   
+│   │   ├── interceptors/             # Custom interceptors
+│   │   └── middleware/               # Custom middleware
+│   ├── config/                     # Custom configuration
+│   ├── database/                   # Store files which are connected only to database
+│   │   ├── migrations/               # Migrations which will be generated by typeorm
+│   ├── modules/                    # Application's modules
+│   │   ├── auth/                       # Authentication & authorization logic
+│   │   │   ├── dto/                    # DTO related to authentication and authorization
+│   │   │   ├── auth.module.ts          # Auth module setup
+│   │   │   ├── auth.service.ts         # Service handling auth logic
+│   │   │   ├── auth.controller.ts      # Controller handling register and login logic
+│   │   │   ├── jwt.strategy.ts         # JWT strategy for validating tokens
+│   │   ├── book/                       # Book management logic
+│   │   │   ├── dto/                    # DTO related to book logic
+│   │   │   ├── book.entity.ts          # Book entity definition
+│   │   │   ├── book.module.ts          # Book module setup
+│   │   │   ├── book.service.ts         # Service handling book CRUD operations
+│   │   │   └── book.controller.ts      # Controller handling book-related API endpoints
+│   │   ├── category/                       # Category management logic
+│   │   │   ├── dto/                     # DTO related to category logic
+│   │   │   ├── category.entity.ts          # Category entity definition
+│   │   │   ├── category.module.ts          # Category module setup
+│   │   │   ├── category.service.ts         # Service handling category CRUD operations
+│   │   │   └── category.controller.ts      # Controller handling category-related API endpoints
+│   │   ├── membership/                   # Membership management logic
+│   │   │   ├── dto/                     # DTO related to membership logic
+│   │   │   ├── membership.entity.ts      # Membership entity definition
+│   │   │   ├── membership.module.ts      # Membership module setup
+│   │   │   ├── membership.service.ts     # Service handling membership CRUD and renewals
+│   │   │   └── membership.controller.ts  # Controller handling membership-related API endpoints
+│   │   ├── membershipLevel/                   # Membership management logic
+│   │   │   ├── dto/                            # DTO related to membership level logic
+│   │   │   ├── membershipLevel.entity.ts       # Membership level entity definition
+│   │   │   ├── membershipLevel.module.ts       # Membership level module setup
+│   │   │   ├── membershipLevel.service.ts      # Service handling membership level CRUD and renewals
+│   │   │   └── membershipLevel.controller.ts   # Controller handling membership level-related API endpoints
+│   │   ├── membershipPayment/                   # Membership payment management logic
+│   │   │   ├── dto/                             # DTO related to membership payment logic
+│   │   │   ├── membershipPayment.entity.ts      # Membership payment entity definition
+│   │   │   ├── membershipPayment.module.ts      # Membership payment module setup
+│   │   │   ├── membershipPayment.service.ts     # Service handling membership payment CRUD and renewals
+│   │   │   └── membershipPayment.controller.ts  # Controller handling membership payment-related API endpoints
+│   │   ├── rental/                       # Rental management logic
+│   │   │   ├── dto/                      # DTO related to rental logic
+│   │   │   ├── rental.entity.ts          # Rental entity definition
+│   │   │   ├── rental.module.ts          # Rental module setup
+│   │   │   ├── rental.service.ts         # Service handling rental CRUD and status updates
+│   │   │   └── rental.controller.ts      # Controller handling rental-related API endpoints
+│   │   ├── rental-payment/                     # Rental payment management logic
+│   │   │   ├── dto/                            # DTO related to rental payment logic
+│   │   │   ├── rental-payment.entity.ts        # Rental payment entity definition
+│   │   │   ├── rental-payment.module.ts        # Rental payment module setup
+│   │   │   ├── rental-payment.service.ts       # Service handling rental payment CRUD and status updates
+│   │   │   └── rental-payment.controller.ts    # Controller handling rental payment-related API endpoints
+│   │   ├── user/                       # User management logic
+│   │   │   ├── dto/                    # DTO related to rental user management logic
+│   │   │   ├── user.entity.ts          # User entity definition
+│   │   │   ├── user.module.ts          # User module setup
+│   │   │   ├── user.service.ts         # Service handling user CRUD and role management
+│   │   │   └── user.controller.ts      # Controller handling user-related API endpoints
+│   ├── shared/                     # Shared module 
+│   ├── app.module.ts               # Root application module
+│   └── main.ts                     # Main entry point of the application
+├── .env                            # Environment variables
+├── README.md                       # Project documentation
+├── tsconfig.json                   # TypeScript configuration
+├── ormconfig.json                  # TypeORM configuration
+└── package.json                    # Project metadata and dependencies
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+```
+## Database Design
+The project uses the following main entities:
 
-## Support
+- User: Represents a user of the system with roles.
+- Book: Represents a book in the library.
+- Category: Represents the category of book in the library.
+- Rental: Tracks book rentals and due dates.
+- RentalPayment: Tracks the payments for rentals
+- Membership: Tracks membership status and renewal/expiration dates.
+- MembershipPayment: Tracks the payments of membership.
+- MembershipLevel: Defines different membership levels with discounts and fees.
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+## Important Commands
+- Run the Application:
+```bash
+$ npm run start
+```
+- Run Migrations
+```bash
+$ npm run migration:run
+```
+- Revert Migrations:
+```bash
+$ npm run migration:revert
+```
 
-## Stay in touch
+## Role-Based Access Control
+The system supports role-based access, defined through decorators and guards in NestJS:
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+- Roles:
+  - Admin: Full access to all functionalities
+  - Librarian: Access to book and rental, membership management
+  - Member: Access to view and manage own rentals, memberships
+  - User: Have all member's accessibility except of membership functionalities
+Role checks are implemented using a custom @Roles decorator and RoleGuard.

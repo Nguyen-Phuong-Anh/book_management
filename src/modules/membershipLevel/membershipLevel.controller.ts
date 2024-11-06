@@ -6,10 +6,13 @@ import { UpdateMembershipLevelDto } from './dto/update-membershipLevel.dto';
 import { MembershipLevelService } from './membershipLevel.service';
 import { Roles } from 'src/common/decorators/role.decorator';
 import { Role } from 'src/common/enum/role.enum';
-import { RoleGuard } from 'src/common/guard/role.guard';
+import { RoleGuard } from 'src/common/guards/role.guard';
 import { Reflector } from '@nestjs/core';
+import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 
+@UseGuards(RoleGuard)
 @Controller('membership-levels')
+@ApiTags('membership-level')
 export class MembershipLevelController {
     constructor(
         private readonly reflector: Reflector,
@@ -17,9 +20,11 @@ export class MembershipLevelController {
     ) { }
 
     @Roles(Role.Librarian)
-    @UseGuards(RoleGuard)
     @SetMetadata('isCacheable', true)
     @Get('/:id')
+    @ApiOperation({ summary: "Find a specific membership level" })
+    @ApiParam({ name: 'id', type: Number, description: 'the ID of the membership level' })
+    @ApiResponse({ status: 200, description: 'Membership level returned successfully' })
     async findOneMembershipLevel(@Param('id', ParseIntPipe) id: number) {
         const isCacheable = this.reflector.get<boolean>('isCacheable', MembershipLevelController.prototype.findOneMembershipLevel);
         const membershipLevel = await this.membershipLevelService.findOneMembershipLevel(id)
@@ -31,9 +36,12 @@ export class MembershipLevelController {
     }
 
     @Roles(Role.Librarian)
-    @UseGuards(RoleGuard)
     @SetMetadata('isCacheable', true)
     @Get()
+    @ApiOperation({ summary: "Find all membership levels" })
+    @ApiQuery({ name: 'page', type: Number, description: 'The current page', required: false })
+    @ApiQuery({ name: 'per_page', type: Number, description: 'The page size', required: false })
+    @ApiResponse({ status: 200, description: 'List of membership levels returned successfully' })
     async findAll(
         @Query('page') page: number = 1,
         @Query('per_page') per_page: number = 10,
@@ -64,8 +72,10 @@ export class MembershipLevelController {
     }
 
     @Roles(Role.Librarian)
-    @UseGuards(RoleGuard)
     @Post()
+    @ApiOperation({ summary: "Create a new membership level" })
+    @ApiBody({ type: CreateMembershipLevelDto })
+    @ApiResponse({ status: 201, description: 'Created membership level successfully' })
     async create(@Body() createMembershipDto: CreateMembershipLevelDto) {
         const membershipLevel = await this.membershipLevelService.create(createMembershipDto)
         return {
@@ -75,8 +85,11 @@ export class MembershipLevelController {
     }
 
     @Roles(Role.Librarian)
-    @UseGuards(RoleGuard)
     @Put('/:id')
+    @ApiOperation({ summary: "Update a membership level" })
+    @ApiParam({ name: 'id', type: Number, description: 'Id of the membership level' })
+    @ApiBody({ type: UpdateMembershipLevelDto })
+    @ApiResponse({ status: 200, description: 'Update membership level successfully' })
     async update(@Param('id', ParseIntPipe) id: number, @Body() updateMembershipLevelDto: UpdateMembershipLevelDto) {
         const updateMembershipLevel = await this.membershipLevelService.update(id, updateMembershipLevelDto)
         return {
@@ -86,8 +99,10 @@ export class MembershipLevelController {
     }
 
     @Roles(Role.Librarian)
-    @UseGuards(RoleGuard)
     @Delete('/:id')
+    @ApiOperation({ summary: "Delete a membership level" })
+    @ApiParam({ name: 'id', type: Number, description: 'Id of the membership level' })
+    @ApiResponse({ status: 304, description: 'Delete membership level successfully' })
     async delete(@Param('id', ParseIntPipe) id: number) {
         await this.membershipLevelService.delete(id)
         return {}

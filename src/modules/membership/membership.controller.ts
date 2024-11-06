@@ -6,10 +6,13 @@ import { UpdateMembershipDto } from './dto/update-membership.dto';
 import { MembershipService } from './membership.service';
 import { Roles } from 'src/common/decorators/role.decorator';
 import { Role } from 'src/common/enum/role.enum';
-import { RoleGuard } from 'src/common/guard/role.guard';
+import { RoleGuard } from 'src/common/guards/role.guard';
 import { UserService } from '../user/user.service';
+import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 
+@UseGuards(RoleGuard)
 @Controller('memberships')
+@ApiTags('membership')
 export class MembershipController {
     constructor(
         private readonly reflector: Reflector,
@@ -18,9 +21,11 @@ export class MembershipController {
     ) { }
 
     @Roles(Role.Librarian, Role.Member)
-    @UseGuards(RoleGuard)
     @SetMetadata('isCacheable', true)
     @Get('/:id')
+    @ApiOperation({ summary: "Find a specific membership" })
+    @ApiParam({ name: 'id', type: Number, description: 'the ID of the membership' })
+    @ApiResponse({ status: 200, description: 'Membership returned successfully' })
     async findOneMembership(@Param('id') id: number) {
         const isCacheable = this.reflector.get<boolean>('isCacheable', MembershipController.prototype.findOneMembership);
         const membership = await this.membershipService.findOneMembership(id)
@@ -32,9 +37,12 @@ export class MembershipController {
     }
 
     @Roles(Role.Librarian)
-    @UseGuards(RoleGuard)
     @SetMetadata('isCacheable', true)
     @Get()
+    @ApiOperation({ summary: "Find all memberships" })
+    @ApiQuery({ name: 'page', type: Number, description: 'The current page', required: false })
+    @ApiQuery({ name: 'per_page', type: Number, description: 'The page size', required: false })
+    @ApiResponse({ status: 200, description: 'List of memberships returned successfully' })
     async findAll(
         @Query('page') page: number = 1,
         @Query('per_page') per_page: number = 10
@@ -65,8 +73,10 @@ export class MembershipController {
     }
 
     @Roles(Role.User)
-    @UseGuards(RoleGuard)
     @Post()
+    @ApiOperation({ summary: "Create a new membership" })
+    @ApiBody({ type: CreateMembershipDto })
+    @ApiResponse({ status: 201, description: 'Created membership successfully' })
     async create(@Body() createMemberDto: CreateMembershipDto) {
         const membership = await this.membershipService.create(createMemberDto)
         await this.userService.updateRoleToMember(createMemberDto.userId);
@@ -77,8 +87,11 @@ export class MembershipController {
     }
 
     @Roles(Role.Member)
-    @UseGuards(RoleGuard)
     @Put('/:id')
+    @ApiOperation({ summary: "Update a membership" })
+    @ApiParam({ name: 'id', type: Number, description: 'Id of the membership' })
+    @ApiBody({ type: UpdateMembershipDto })
+    @ApiResponse({ status: 200, description: 'Update membership successfully' })
     async update(@Param('id') id: number, @Body() updatedMembershipDto: UpdateMembershipDto) {
         const updatedMembership = await this.membershipService.update(id, updatedMembershipDto)
         return {
