@@ -13,6 +13,9 @@ import { IsUniqueConstraint } from './shared/validation/is-unique-constraint.val
 import { ScheduleModule } from '@nestjs/schedule';
 import { RentalModule } from './modules/rental/rental.module';
 import { RentalPaymentModule } from './modules/rental-payment/rental-payment.module';
+import { MembershipModule } from './modules/membership/membership.module';
+import { MembershipLevelModule } from './modules/membershipLevel/membershipLevel.module';
+import { MembershipPaymentModule } from './modules/membershipPayment/membership-payment.module';
 
 @Module({
   imports: [
@@ -21,12 +24,15 @@ import { RentalPaymentModule } from './modules/rental-payment/rental-payment.mod
     CategoryModule,
     RentalModule,
     RentalPaymentModule,
+    MembershipModule,
+    MembershipLevelModule,
+    MembershipPaymentModule,
     AuthModule,
     HttpModule,
     ConfigModule.forRoot({
       isGlobal: true,
       load: [configuration]
-    }), 
+    }),
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: 'localhost',
@@ -37,11 +43,11 @@ import { RentalPaymentModule } from './modules/rental-payment/rental-payment.mod
       entities: [__dirname + '/modules/**/*.entity{.ts,.js}'],
       // migrations: [__dirname + '/database/migrations/*{.ts,.js}'],
       // migrationsRun: true,
-      synchronize: true,  
+      synchronize: true,
     }),
     ScheduleModule.forRoot()
   ],
   controllers: [AppController],
   providers: [AppService, IsUniqueConstraint],
 })
-export class AppModule {}
+export class AppModule { }
