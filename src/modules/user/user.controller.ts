@@ -13,7 +13,6 @@ export class UserController {
     @ApiOperation({ summary: "Get the profile of current user"})
     @ApiResponse({ status: 200, description: 'The profile of user returned successfully'})
     async findProfile(@Req() req: Request) {
-        console.log(req['user'].sub)
         const profile = await this.userService.findProfile(req['user'].sub)
         return {
             data: [profile]
