@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Put, Query, SetMetadata, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put, Query, Req, SetMetadata, UseGuards } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { api_ver1 } from 'src/shared/constants';
 import { CreateMembershipDto } from './dto/create-membership.dto';
@@ -26,11 +26,18 @@ export class MembershipController {
     @ApiOperation({ summary: "Find a specific membership" })
     @ApiParam({ name: 'id', type: Number, description: 'the ID of the membership' })
     @ApiResponse({ status: 200, description: 'Membership returned successfully' })
-    async findOneMembership(@Param('id') id: number) {
+    async findOneMembership(
+        @Req() req: Request,
+        @Param('id') id: number
+    ) {
         const isCacheable = this.reflector.get<boolean>('isCacheable', MembershipController.prototype.findOneMembership);
-        const membership = await this.membershipService.findOneMembership(id)
+        const membership = await this.membershipService.findOneMembership(req['user'].sub, req['user'].roles, id)
+        const { membershipLevel, ...result} = membership
+        result.relationships = {
+            membershipLevel: membershipLevel
+        }
         return {
-            data: [membership],
+            data: [result],
             isCacheable: isCacheable,
             type: 'membership',
         }

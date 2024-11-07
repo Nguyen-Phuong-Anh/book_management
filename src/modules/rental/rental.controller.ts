@@ -8,6 +8,7 @@ import { ApiOperation, ApiParam, ApiResponse, ApiQuery, ApiBody, ApiTags } from 
 import { Roles } from 'src/common/decorators/role.decorator';
 import { Role } from 'src/common/enum/role.enum';
 import { RoleGuard } from 'src/common/guards/role.guard';
+import { ReturnRentalDto } from './dto/return-rental.dto';
 
 @UseGuards(RoleGuard)
 @Controller('rentals')
@@ -25,12 +26,14 @@ export class RentalController {
     @ApiParam({ name: 'id', type: Number, description: 'the ID of the rental' })
     @ApiResponse({ status: 200, description: 'Rental returned successfully' })
     async findOneRental(
-        @Req() req: Request,
         @Param('id') id: number
     ) {
-        const rental = await this.rentalService.findOneRental(req['user'].sub, req['user'].roles, id)
+        const isCacheable = this.reflector.get<boolean>('isCacheable', RentalController.prototype.findOneRental);
+        const rental = await this.rentalService.findOneRental(id)
         return {
-            data: [rental]
+            data: [rental],
+            isCacheable: isCacheable,
+            type: 'rentals'
         }
     }
 
@@ -71,7 +74,7 @@ export class RentalController {
         }
     }
 
-    @Roles(Role.Librarian)
+    @Roles(Role.User, Role.Member)
     @Post()
     @ApiOperation({ summary: "Create a new rental" })
     @ApiBody({ type: CreateRentalDto })
@@ -81,11 +84,25 @@ export class RentalController {
     ) {
         const rental = await this.rentalService.create(body.discountRate, body.createRentalDto)
         return {
-            data: [rental]
+            data: [rental],
+            type: 'rentals'
         }
     }
 
-    @Roles(Role.Librarian)
+    @Roles(Role.Member, Role.User)
+    @Put('/return/:id')
+    @ApiOperation({ summary: "Return a rental" })
+    @ApiBody({ type: Number })
+    @ApiResponse({ status: 200, description: 'Update rental successfully' })
+    async return(@Body() discountRate: number, @Param('id') id: number) {
+        const returnRental = await this.rentalService.return(discountRate, id)
+        return {
+            data: [returnRental],
+            type: 'rentals'
+        }
+    }
+
+    @Roles(Role.Member, Role.User)
     @Put('/:id')
     @ApiOperation({ summary: "Update a rental" })
     @ApiParam({ name: 'id', type: Number, description: 'Id of the rental' })
@@ -94,7 +111,8 @@ export class RentalController {
     async update(@Param('id') id: number, @Body() updateRentalDto: UpdateRentalDto) {
         const updatedRental = await this.rentalService.update(id, updateRentalDto)
         return {
-            data: [updatedRental]
+            data: [updatedRental],
+            type: 'rentals'
         }
     }
 

@@ -8,6 +8,7 @@ import { RentalStatus } from 'src/common/enum/rental-status.enum';
 import { Book } from '../book/book.entity';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { Role } from 'src/common/enum/role.enum';
+import { ReturnRentalDto } from './dto/return-rental.dto';
 
 @Injectable()
 export class RentalService {
@@ -40,12 +41,8 @@ export class RentalService {
         }
     }
 
-    async findOneRental(userId: number, roles: string[], id: number): Promise<Rental> {
-        let rental;
-        if(roles.includes(Role.Librarian)) {
-            rental = await this.rentalRepository.findOne({ where: {id} })
-        } else 
-            rental = await this.rentalRepository.findOne({ where: {userId, id} })
+    async findOneRental(id: number): Promise<Rental> {
+        const rental = await this.rentalRepository.findOne({ where: {id} })
         if (!rental) {
             throw new NotFoundException(`Not found rental with id ${id} or userId not matched`)
         }
@@ -116,14 +113,6 @@ export class RentalService {
 
             rental.fee = fee
         }
-        
-        let fine = 0
-        if(updateRentalDto?.returnDate) {
-            let dueDate = updateRentalDto?.dueDate ? updateRentalDto?.dueDate : rental.dueDate
-            const differenceMs = new Date(updateRentalDto.returnDate).getTime() - new Date(dueDate).getTime();
-            const days = Math.floor(differenceMs / (1000 * 60 * 60 * 24));
-            fine = Number(process.env.FINE_PER_DAY) * days
-        }
 
         if(updateRentalDto?.books) {
             rental.books = [...rental.books, ...updateRentalDto.books]
@@ -131,8 +120,7 @@ export class RentalService {
 
         try {
             Object.assign(rental, {
-                ...updateRentalDto,
-                fine: fine
+                ...updateRentalDto
             })
             return await this.rentalRepository.save(rental)
         } catch (error) {
@@ -141,10 +129,36 @@ export class RentalService {
         }
     }
 
+    async return(discountRate: number, id: number) {
+        const rental = await this.rentalRepository.findOne({ where: { id } })
+        if (!rental) {
+            throw new NotFoundException(`Rental with ID ${id} not found`)
+        }
+
+        const currentDate = new Date()
+        rental.returnDate = currentDate
+        rental.status = RentalStatus.Rerturned
+                
+        const differenceMs = currentDate.getTime() - new Date(rental.dueDate).getTime();
+        const days = Math.floor(differenceMs / (1000 * 60 * 60 * 24));
+        rental.fine = Number(process.env.FINE_PER_DAY) * days
+
+        rental.discountApplied = (discountRate / 100) * rental.fee
+        
+        try {
+            return await this.rentalRepository.save(rental)
+        } catch (error) {
+            console.log(error)
+            throw new InternalServerErrorException('Failed to return rental')
+        }
+    }
+
     async delete(id: number): Promise<void> {
         const rental = await this.rentalRepository.findOneBy({ id })
         if (!rental) {
             throw new NotFoundException(`Rental with ID ${id} not found`)
+        } else if(rental.status !== RentalStatus.Pending) {
+            throw new Error(`Rentals not pending are not allowed to delete`)
         }
         for (const bookItem of rental.books) {
             const result = await this.dataSource
@@ -159,7 +173,6 @@ export class RentalService {
             }
         }
         await this.rentalRepository.delete(id)
-        
     }
 
     @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)

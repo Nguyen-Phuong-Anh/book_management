@@ -6,6 +6,7 @@ import { CreateMembershipDto } from './dto/create-membership.dto';
 import { UpdateMembershipDto } from './dto/update-membership.dto';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { MembershipStatus } from 'src/common/enum/membership-status.enum';
+import { Role } from 'src/common/enum/role.enum';
 
 @Injectable()
 export class MembershipService {
@@ -27,8 +28,18 @@ export class MembershipService {
         }
     }
 
-    async findOneMembership(id: number) {
-        const membership = await this.membershipRepository.findOneBy({ id })
+    async findOneMembership(userId: number, roles: string[], id: number) {
+        let membership;
+        if(roles.includes(Role.Librarian)) {
+            membership = await this.membershipRepository.findOne({ 
+                where: { id },
+                relations: ['membershipLevel']
+             })
+        } else 
+            membership = await this.membershipRepository.findOne({ 
+                where: {userId, id},
+                relations: ['membershipLevel']
+            })
         if (!membership) {
             throw new NotFoundException(`Not found membership with id ${id}`)
         }

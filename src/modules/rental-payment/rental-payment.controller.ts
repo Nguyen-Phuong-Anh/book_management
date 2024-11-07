@@ -16,7 +16,7 @@ export class RentalPaymentController {
         private readonly rentalPaymentService: RentalPaymentService
     ) { }
 
-    @Roles(Role.Librarian)
+    @Roles(Role.Librarian, Role.Member, Role.User)
     @UseGuards(RoleGuard)
     @SetMetadata('isCacheable', true)
     @Get('/:id')
@@ -26,9 +26,12 @@ export class RentalPaymentController {
     async findOneRentalPayment(
         @Param('id') id: number
     ) {
+        const isCacheable = this.reflector.get<boolean>('isCacheable', RentalPaymentController.prototype.findOneRentalPayment);
         const rental = await this.rentalPaymentService.findOneRentalPayment(id)
         return {
-            data: [rental]
+            data: [rental],
+            isCacheable: isCacheable,
+            type: 'rental-payments'
         }
     }
 
@@ -69,7 +72,7 @@ export class RentalPaymentController {
         }
     }
 
-    @Roles(Role.Librarian)
+    @Roles(Role.User, Role.Member)
     @UseGuards(RoleGuard)
     @Post()
     @ApiBody({ type: CreateRentalPaymentDto })
