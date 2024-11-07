@@ -72,17 +72,15 @@ export class MembershipService {
             throw new NotFoundException(`Membership with ID ${id} not found`)
         }
         
-        if(updatedMembershipDto?.renewalDate) {
+        if(updatedMembershipDto?.renewalDate) { //for renew only
             updatedMembershipDto.renewalDate.setHours(0, 0, 0, 0)
             const expirationDate = new Date(updatedMembershipDto.renewalDate)
             expirationDate.setFullYear(expirationDate.getFullYear() + 1);
             expirationDate.setHours(0, 0, 0, 0)
+            membership.expirationDate = expirationDate
+            membership.status = MembershipStatus.Active
 
             try {
-                Object.assign(membership, {
-                    ...updatedMembershipDto,
-                    expirationDate: expirationDate
-                })
                 return this.membershipRepository.save(membership)
             } catch (error) {
                 throw new InternalServerErrorException('Failed to update membership')
