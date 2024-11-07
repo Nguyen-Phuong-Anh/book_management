@@ -8,7 +8,6 @@ import { RentalStatus } from 'src/common/enum/rental-status.enum';
 import { Book } from '../book/book.entity';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { Role } from 'src/common/enum/role.enum';
-import { ReturnRentalDto } from './dto/return-rental.dto';
 
 @Injectable()
 export class RentalService {
@@ -126,6 +125,21 @@ export class RentalService {
         } catch (error) {
             console.log(error)
             throw new InternalServerErrorException('Failed to update rental')
+        }
+    }
+
+    async confirm(id: number) {
+        const rental = await this.rentalRepository.findOne({ where: { id } })
+        if (!rental) {
+            throw new NotFoundException(`Rental with ID ${id} not found`)
+        }
+        rental.status = RentalStatus.Active
+        
+        try {
+            return await this.rentalRepository.save(rental)
+        } catch (error) {
+            console.log(error)
+            throw new InternalServerErrorException('Failed to return rental')
         }
     }
 

@@ -8,7 +8,6 @@ import { ApiOperation, ApiParam, ApiResponse, ApiQuery, ApiBody, ApiTags } from 
 import { Roles } from 'src/common/decorators/role.decorator';
 import { Role } from 'src/common/enum/role.enum';
 import { RoleGuard } from 'src/common/guards/role.guard';
-import { ReturnRentalDto } from './dto/return-rental.dto';
 
 @UseGuards(RoleGuard)
 @Controller('rentals')
@@ -98,6 +97,19 @@ export class RentalController {
         const returnRental = await this.rentalService.return(discountRate, id)
         return {
             data: [returnRental],
+            type: 'rentals'
+        }
+    }
+
+    @Roles(Role.Librarian)
+    @Put('/confirm/:id')
+    @ApiOperation({ summary: "Confirm a rental" })
+    @ApiParam({ name: 'id', type: Number, description: 'Id of the rental' })
+    @ApiResponse({ status: 200, description: 'Confirm rental successfully' })
+    async confirmRental(@Param('id') id: number) {
+        const updatedRental = await this.rentalService.confirm(id)
+        return {
+            data: [updatedRental],
             type: 'rentals'
         }
     }
