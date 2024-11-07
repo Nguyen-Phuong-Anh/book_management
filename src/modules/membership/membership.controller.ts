@@ -67,9 +67,9 @@ export class MembershipController {
                 total: total,
                 links: [
                     { self: `${api_ver1}/memberships?page=${page}&per_page=${per_page}` },
-                    { first: `${api_ver1}/memberships?page=0&per_page=${per_page}` },
-                    { previous: `${api_ver1}/memberships?page=${page - 1}&per_page=${per_page}` },
-                    { next: `${api_ver1}/memberships?page=${page + 1}&per_page=${per_page}` },
+                    { first: `${api_ver1}/books?page=1&per_page=${per_page}` },
+                    { previous: `${api_ver1}/books?page=${page > 1 ? page - 1 : page}&per_page=${per_page}` },
+                    { next: `${api_ver1}/books?page=${page + 1 <= totalPage ? page + 1 : totalPage}&per_page=${per_page}` },
                     { last: `${api_ver1}/memberships?page=${totalPage}&per_page=${per_page}` },
 
                 ]

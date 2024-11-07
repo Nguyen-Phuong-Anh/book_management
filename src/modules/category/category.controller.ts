@@ -38,9 +38,9 @@ export class CategoryController {
                 total: total,
                 links: [
                     {self: `${api_ver1}/categories?page=${page}&per_page=${per_page}`},
-                    {first: `${api_ver1}/categories?page=0&per_page=${per_page}`},
-                    {previous: `${api_ver1}/categories?page=${page-1}&per_page=${per_page}`},
-                    {next: `${api_ver1}/categories?page=${page+1}&per_page=${per_page}`},
+                    { first: `${api_ver1}/books?page=1&per_page=${per_page}` },
+                    { previous: `${api_ver1}/books?page=${page > 1 ? page - 1 : page}&per_page=${per_page}` },
+                    { next: `${api_ver1}/books?page=${page + 1 <= totalPage ? page + 1 : totalPage}&per_page=${per_page}` },
                     {last: `${api_ver1}/categories?page=${totalPage}&per_page=${per_page}`},
                     
                 ]
@@ -75,7 +75,7 @@ export class CategoryController {
         const isCacheable = this.reflector.get<boolean>('isCacheable', CategoryController.prototype.create);
         const category = await this.categoryService.create(createCategoryDto)   
         return {
-            data: category,
+            data: [category],
             isCacheable: isCacheable,
             type: 'categories'
         }
@@ -92,7 +92,7 @@ export class CategoryController {
         const isCacheable = this.reflector.get<boolean>('isCacheable', CategoryController.prototype.update);
         const updatedCategory = await this.categoryService.update(id, updateCategoryDto)
         return {
-            data: updatedCategory,
+            data: [updatedCategory],
             isCacheable: isCacheable,
             type: 'categories'
         }
