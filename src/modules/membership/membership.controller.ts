@@ -94,6 +94,19 @@ export class MembershipController {
     }
 
     @Roles(Role.Member)
+    @Put('/renew/:id')
+    @ApiOperation({ summary: "Update renewal date of a membership" })
+    @ApiParam({ name: 'id', type: Number, description: 'Id of the membership' })
+    @ApiResponse({ status: 200, description: 'Update renewal date of the membership successfully' })
+    async renewMembership(@Param('id') id: number) {
+        const updatedMembership = await this.membershipService.renewMembership(id)
+        return {
+            data: [updatedMembership],
+            type: 'membership'
+        }
+    }
+
+    @Roles(Role.Member)
     @Put('/:id')
     @ApiOperation({ summary: "Update a membership" })
     @ApiParam({ name: 'id', type: Number, description: 'Id of the membership' })

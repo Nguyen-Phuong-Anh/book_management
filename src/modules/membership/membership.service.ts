@@ -72,22 +72,29 @@ export class MembershipService {
             throw new NotFoundException(`Membership with ID ${id} not found`)
         }
         
-        if(updatedMembershipDto?.renewalDate) { //for renew only
-            updatedMembershipDto.renewalDate.setHours(0, 0, 0, 0)
-            const expirationDate = new Date(updatedMembershipDto.renewalDate)
-            expirationDate.setFullYear(expirationDate.getFullYear() + 1);
-            expirationDate.setHours(0, 0, 0, 0)
-            membership.expirationDate = expirationDate
-            membership.status = MembershipStatus.Active
-
-            try {
-                return this.membershipRepository.save(membership)
-            } catch (error) {
-                throw new InternalServerErrorException('Failed to update membership')
-            }
-        }
         try {
             Object.assign(membership, updatedMembershipDto)
+            return this.membershipRepository.save(membership)
+        } catch (error) {
+            throw new InternalServerErrorException('Failed to update membership')
+        }
+    }
+
+    async renewMembership(id: number) {
+        const membership = await this.membershipRepository.findOne({ where: { id } })
+        if (!membership) {
+            throw new NotFoundException(`Membership with ID ${id} not found`)
+        }
+
+        const renewalDate = new Date()
+        membership.renewalDate = renewalDate
+        const expirationDate = new Date(renewalDate)
+        expirationDate.setFullYear(expirationDate.getFullYear() + 1);
+        
+        membership.expirationDate = expirationDate
+        membership.status = MembershipStatus.Active
+
+        try {
             return this.membershipRepository.save(membership)
         } catch (error) {
             throw new InternalServerErrorException('Failed to update membership')

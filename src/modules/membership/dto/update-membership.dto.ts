@@ -1,6 +1,6 @@
 import { IsNumber } from "@nestjs/class-validator"
 import { ApiProperty } from "@nestjs/swagger"
-import { IsDateString, IsOptional, IsString } from "class-validator"
+import { IsOptional, IsString } from "class-validator"
 import { MembershipStatus } from "src/common/enum/membership-status.enum"
 
 export class UpdateMembershipDto {
@@ -8,11 +8,6 @@ export class UpdateMembershipDto {
     @IsOptional()
     @ApiProperty({enum: MembershipStatus, description: 'Status of the membership'})
     status: MembershipStatus
-    
-    @IsDateString()
-    @IsOptional()
-    @ApiProperty({type: Date, description: 'Renewal date of the membership'})
-    renewalDate: Date
 
     @IsNumber()
     @IsOptional()
