@@ -40,7 +40,7 @@ export class SuccessResponseInterceptorInterceptor implements NestInterceptor {
             const {id, ...otherAttr} = data
             return {
               type: type,
-              id: data.id,
+              id: id,
               attributes: { ...otherAttr }
             }
           })

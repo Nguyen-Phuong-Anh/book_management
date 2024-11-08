@@ -1,10 +1,9 @@
 import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
-import { FindOptionsWhere, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Book } from './book.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateBookDto } from './dto/create-book.dto';
 import { UpdateBookDto } from './dto/update-book.dto';
-import { QueryDto } from '../category/dto/query.dto';
 
 @Injectable()
 export class BookService {
@@ -36,8 +35,8 @@ export class BookService {
     async searchBooks(title: string, author: string) {
         const [books, total] = await this.bookRepository
             .createQueryBuilder('book')
-            .where('book.title LIKE :query', { query: `%${title}%` })
-            .orWhere('book.author LIKE :query', { query: `%${author}%` })
+            .where('book.title LIKE :titleQuery', { titleQuery: `%${title}%` })
+            .orWhere('book.author LIKE :authorQuery', { authorQuery: `%${author}%` })
             .getManyAndCount()
         if (books.length === 0) {
             throw new NotFoundException(`Not found book with given queries`)

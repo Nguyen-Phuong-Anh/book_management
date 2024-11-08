@@ -10,21 +10,29 @@ import configuration from './config/configuration';
 import { HttpModule } from '@nestjs/axios';
 import { AuthModule } from './modules/auth/auth.module';
 import { IsUniqueConstraint } from './shared/validation/is-unique-constraint.validation';
+import { ScheduleModule } from '@nestjs/schedule';
+import { RentalModule } from './modules/rental/rental.module';
+import { RentalPaymentModule } from './modules/rental-payment/rental-payment.module';
+import { MembershipModule } from './modules/membership/membership.module';
+import { MembershipLevelModule } from './modules/membershipLevel/membershipLevel.module';
+import { MembershipPaymentModule } from './modules/membershipPayment/membership-payment.module';
 
 @Module({
   imports: [
     UserModule,
     BookModule,
     CategoryModule,
+    RentalModule,
+    RentalPaymentModule,
+    MembershipModule,
+    MembershipLevelModule,
+    MembershipPaymentModule,
     AuthModule,
     HttpModule,
     ConfigModule.forRoot({
       isGlobal: true,
       load: [configuration]
     }),
-    BookModule, 
-    CategoryModule, 
-    UserModule,
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: 'localhost',
@@ -35,10 +43,11 @@ import { IsUniqueConstraint } from './shared/validation/is-unique-constraint.val
       entities: [__dirname + '/modules/**/*.entity{.ts,.js}'],
       // migrations: [__dirname + '/database/migrations/*{.ts,.js}'],
       // migrationsRun: true,
-      synchronize: true,  
-    })
+      synchronize: true,
+    }),
+    ScheduleModule.forRoot()
   ],
   controllers: [AppController],
   providers: [AppService, IsUniqueConstraint],
 })
-export class AppModule {}
+export class AppModule { }

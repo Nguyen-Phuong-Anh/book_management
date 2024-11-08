@@ -23,12 +23,15 @@ export class BookController {
     @ApiQuery({ name: 'author', type: String, description: 'Author of book', required: false})
     @ApiResponse({ status: 200, description: 'List of books returned successfully'})
     async searchBooks(@Query('title') title: string, @Query('author') author: string) {
+        const isCacheable = this.reflector.get<boolean>('isCacheable', BookController.prototype.searchBooks);
         const { books, total } = await this.bookService.searchBooks(title, author)
         return {
             data: books,
             meta: {
                 total: total
-            }
+            },
+            isCacheable: isCacheable,
+            type: 'books'
         }
     }
 
@@ -38,9 +41,12 @@ export class BookController {
     @ApiParam({ name: 'id', type: Number, description: 'the ID of the book'})
     @ApiResponse({ status: 200, description: 'Book returned successfully'})
     async findOneBook(@Param('id') id: number) {
+        const isCacheable = this.reflector.get<boolean>('isCacheable', BookController.prototype.findOneBook);
         const book = await this.bookService.findOneBook(id)
         return {
-            data: book
+            data: [book],
+            isCacheable: isCacheable,
+            type: 'books'
         }
     }
 
@@ -52,7 +58,7 @@ export class BookController {
     @ApiResponse({ status: 200, description: 'List of books returned successfully'})
     async findAll(
         @Query('page') page: number = 1,
-        @Query('per_page') per_page: number = 108
+        @Query('per_page') per_page: number = 10
     ) {
         const isCacheable = this.reflector.get<boolean>('isCacheable', BookController.prototype.findAll);
         per_page = per_page > 100 ? 100 : per_page;
@@ -67,9 +73,9 @@ export class BookController {
                 total: total,
                 links: [
                     { self: `${api_ver1}/books?page=${page}&per_page=${per_page}` },
-                    { first: `${api_ver1}/books?page=0&per_page=${per_page}` },
-                    { previous: `${api_ver1}/books?page=${page - 1}&per_page=${per_page}` },
-                    { next: `${api_ver1}/books?page=${page + 1}&per_page=${per_page}` },
+                    { first: `${api_ver1}/books?page=1&per_page=${per_page}` },
+                    { previous: `${api_ver1}/books?page=${page > 1 ? page - 1 : page}&per_page=${per_page}` },
+                    { next: `${api_ver1}/books?page=${page + 1 <= totalPage ? page + 1 : totalPage}&per_page=${per_page}` },
                     { last: `${api_ver1}/books?page=${totalPage}&per_page=${per_page}` },
 
                 ]
@@ -87,9 +93,12 @@ export class BookController {
     @ApiBody({ type: CreateBookDto })
     @ApiResponse({ status: 201, description: 'Created book successfully'})
     async create(@Body() createBookDto: CreateBookDto) {
+        const isCacheable = this.reflector.get<boolean>('isCacheable', BookController.prototype.create);
         const book = await this.bookService.create(createBookDto)
         return {
-            data: [book]
+            data: [book],
+            isCacheable: isCacheable,
+            type: 'books'
         }
     }
     
@@ -101,15 +110,17 @@ export class BookController {
     @ApiBody({ type: UpdateBookDto })
     @ApiResponse({ status: 200, description: 'Update book successfully'})
     async update(@Param('id') id: number, @Body() updateBookDto: UpdateBookDto) {
+        const isCacheable = this.reflector.get<boolean>('isCacheable', BookController.prototype.create);
         const updatedBook = await this.bookService.update(id, updateBookDto)
         return {
-            data: updatedBook
+            data: [updatedBook],
+            isCacheable: isCacheable,
+            type: 'books'
         }
     }
 
     
     @Roles(Role.Admin)
-    @SetMetadata('isCacheable', false)
     @Delete('/:id')
     @ApiOperation({ summary: "Delete a book"})
     @ApiParam({ name: 'id', type: Number, description: 'Id of the book'})
