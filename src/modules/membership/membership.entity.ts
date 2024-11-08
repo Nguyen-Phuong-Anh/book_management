@@ -34,8 +34,7 @@ export class Membership {
     @JoinColumn({ name: 'userId' })
     user: User
 
-    @ManyToOne(() => MembershipLevel, (membershipLevel) => membershipLevel.id)
+    @ManyToOne(() => MembershipLevel, (membershipLevel) => membershipLevel.memberships)
     @JoinColumn({ name: 'membershipLevelID'})
     membershipLevel: MembershipLevel
-
 }

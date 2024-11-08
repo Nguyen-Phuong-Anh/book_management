@@ -1,4 +1,5 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Membership } from "../membership/membership.entity";
 
 @Entity()
 export class MembershipLevel {
@@ -13,4 +14,7 @@ export class MembershipLevel {
 
     @Column({ type: 'real' })
     annualFee: number
+
+    @OneToMany(() => Membership, (membership) => membership.membershipLevel)
+    memberships: Membership[]
 }

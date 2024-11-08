@@ -35,8 +35,8 @@ export class BookService {
     async searchBooks(title: string, author: string) {
         const [books, total] = await this.bookRepository
             .createQueryBuilder('book')
-            .where('book.title LIKE :query', { query: `%${title}%` })
-            .orWhere('book.author LIKE :query', { query: `%${author}%` })
+            .where('book.title LIKE :titleQuery', { titleQuery: `%${title}%` })
+            .orWhere('book.author LIKE :authorQuery', { authorQuery: `%${author}%` })
             .getManyAndCount()
         if (books.length === 0) {
             throw new NotFoundException(`Not found book with given queries`)

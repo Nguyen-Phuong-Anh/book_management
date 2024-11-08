@@ -1,4 +1,4 @@
-import { Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, JoinColumn, ManyToOne, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import { User } from "../user/user.entity";
 import { Rental } from "../rental/rental.entity";
 
@@ -6,9 +6,6 @@ import { Rental } from "../rental/rental.entity";
 export class RentalPayment {
     @PrimaryGeneratedColumn()
     id: number
-
-    @Column()
-    librarianId: number
 
     @Column()
     rentalId: number
@@ -20,10 +17,6 @@ export class RentalPayment {
         type: 'real'
     })
     amount: number
-
-    @OneToOne(() => User, user => user.id)
-    @JoinColumn({ name: 'librarianId'})
-    librarian: User
 
     @OneToOne(() => Rental, rental => rental.id)
     @JoinColumn({ name: 'rentalId'})

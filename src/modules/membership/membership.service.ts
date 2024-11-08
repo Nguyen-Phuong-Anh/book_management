@@ -6,6 +6,7 @@ import { CreateMembershipDto } from './dto/create-membership.dto';
 import { UpdateMembershipDto } from './dto/update-membership.dto';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { MembershipStatus } from 'src/common/enum/membership-status.enum';
+import { Role } from 'src/common/enum/role.enum';
 
 @Injectable()
 export class MembershipService {
@@ -27,8 +28,18 @@ export class MembershipService {
         }
     }
 
-    async findOneMembership(id: number) {
-        const membership = await this.membershipRepository.findOneBy({ id })
+    async findOneMembership(userId: number, roles: string[], id: number) {
+        let membership;
+        if(roles.includes(Role.Librarian)) {
+            membership = await this.membershipRepository.findOne({ 
+                where: { id },
+                relations: ['membershipLevel']
+             })
+        } else 
+            membership = await this.membershipRepository.findOne({ 
+                where: {userId, id},
+                relations: ['membershipLevel']
+            })
         if (!membership) {
             throw new NotFoundException(`Not found membership with id ${id}`)
         }
@@ -61,24 +72,29 @@ export class MembershipService {
             throw new NotFoundException(`Membership with ID ${id} not found`)
         }
         
-        if(updatedMembershipDto?.renewalDate) {
-            updatedMembershipDto.renewalDate.setHours(0, 0, 0, 0)
-            const expirationDate = new Date(updatedMembershipDto.renewalDate)
-            expirationDate.setFullYear(expirationDate.getFullYear() + 1);
-            expirationDate.setHours(0, 0, 0, 0)
-
-            try {
-                Object.assign(membership, {
-                    ...updatedMembershipDto,
-                    expirationDate: expirationDate
-                })
-                return this.membershipRepository.save(membership)
-            } catch (error) {
-                throw new InternalServerErrorException('Failed to update membership')
-            }
-        }
         try {
             Object.assign(membership, updatedMembershipDto)
+            return this.membershipRepository.save(membership)
+        } catch (error) {
+            throw new InternalServerErrorException('Failed to update membership')
+        }
+    }
+
+    async renewMembership(id: number) {
+        const membership = await this.membershipRepository.findOne({ where: { id } })
+        if (!membership) {
+            throw new NotFoundException(`Membership with ID ${id} not found`)
+        }
+
+        const renewalDate = new Date()
+        membership.renewalDate = renewalDate
+        const expirationDate = new Date(renewalDate)
+        expirationDate.setFullYear(expirationDate.getFullYear() + 1);
+        
+        membership.expirationDate = expirationDate
+        membership.status = MembershipStatus.Active
+
+        try {
             return this.membershipRepository.save(membership)
         } catch (error) {
             throw new InternalServerErrorException('Failed to update membership')

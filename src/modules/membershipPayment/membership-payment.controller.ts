@@ -2,22 +2,27 @@ import { Body, Controller, Get, Param, Post, Query, Req, SetMetadata, UseGuards 
 import { Reflector } from '@nestjs/core';
 import { MembershipPaymentService } from './membership-payment.service';
 import { Role } from 'src/common/enum/role.enum';
-import { RoleGuard } from 'src/common/guard/role.guard';
+import { RoleGuard } from 'src/common/guards/role.guard';
 import { Roles } from 'src/common/decorators/role.decorator';
 import { api_ver1 } from 'src/shared/constants';
 import { CreateMembershipPaymentDto } from './dto/create-membership-payment.dto';
+import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 
+@UseGuards(RoleGuard)
 @Controller('membership-payments')
+@ApiTags('membership-payment')
 export class MembershipPaymentController {
     constructor(
         private readonly reflector: Reflector,
         private readonly membershipPaymentService: MembershipPaymentService
-    ) {}
+    ) { }
 
     @Roles(Role.Librarian, Role.Member)
-    @UseGuards(RoleGuard)
     @SetMetadata('isCacheable', true)
     @Get('/:id')
+    @ApiOperation({ summary: "Find a specific membership payment" })
+    @ApiParam({ name: 'id', type: Number, description: 'the ID of the membership payment' })
+    @ApiResponse({ status: 200, description: 'Membership payment returned successfully' })
     async findOneMembershipPayment(
         @Req() req: Request,
         @Param('id') id: number
@@ -30,11 +35,14 @@ export class MembershipPaymentController {
             type: 'membership-payments'
         }
     }
-    
+
     @Roles(Role.Librarian, Role.Member)
-    @UseGuards(RoleGuard)
     @SetMetadata('isCacheable', true)
     @Get()
+    @ApiOperation({ summary: "Find all membership payments" })
+    @ApiQuery({ name: 'page', type: Number, description: 'The current page', required: false })
+    @ApiQuery({ name: 'per_page', type: Number, description: 'The page size', required: false })
+    @ApiResponse({ status: 200, description: 'List of membership payments returned successfully' })
     async findAll(
         @Req() req: Request,
         @Query('page') page: number = 1,
@@ -53,9 +61,9 @@ export class MembershipPaymentController {
                 total: total,
                 links: [
                     { self: `${api_ver1}/membership-payments?page=${page}&per_page=${per_page}` },
-                    { first: `${api_ver1}/membership-payments?page=0&per_page=${per_page}` },
-                    { previous: `${api_ver1}/membership-payments?page=${page - 1}&per_page=${per_page}` },
-                    { next: `${api_ver1}/membership-payments?page=${page + 1}&per_page=${per_page}` },
+                    { first: `${api_ver1}/books?page=1&per_page=${per_page}` },
+                    { previous: `${api_ver1}/books?page=${page > 1 ? page - 1 : page}&per_page=${per_page}` },
+                    { next: `${api_ver1}/books?page=${page + 1 <= totalPage ? page + 1 : totalPage}&per_page=${per_page}` },
                     { last: `${api_ver1}/membership-payments?page=${totalPage}&per_page=${per_page}` },
 
                 ]
@@ -64,11 +72,12 @@ export class MembershipPaymentController {
             type: 'membership-payments'
         }
     }
-    
+
     @Roles(Role.Member)
-    @UseGuards(RoleGuard)
-    @SetMetadata('isCacheable', false)
     @Post()
+    @ApiOperation({ summary: "Create a new membership payment" })
+    @ApiBody({ type: CreateMembershipPaymentDto })
+    @ApiResponse({ status: 201, description: 'Created membership payment successfully' })
     async create(
         @Body() createMembershipPaymentDto: CreateMembershipPaymentDto
     ) {
