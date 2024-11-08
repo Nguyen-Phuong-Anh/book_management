@@ -9,8 +9,8 @@ import { Roles } from 'src/common/decorators/role.decorator';
 import { Role } from 'src/common/enum/role.enum';
 import { RoleGuard } from 'src/common/guards/role.guard';
 
-@UseGuards(RoleGuard)
 @Controller('rentals')
+@UseGuards(RoleGuard)
 @ApiTags('rental')
 export class RentalController {
     constructor(
@@ -73,28 +73,30 @@ export class RentalController {
         }
     }
 
-    @Roles(Role.User, Role.Member)
+    @Roles(Role.User)
     @Post()
     @ApiOperation({ summary: "Create a new rental" })
     @ApiBody({ type: CreateRentalDto })
+    @ApiQuery({ name: 'discountRate', type: Number, description: 'The discount rate', required: true })
     @ApiResponse({ status: 201, description: 'Created rental successfully' })
     async create(
-        @Body() body: { createRentalDto: CreateRentalDto, discountRate: number }
+        @Req() req: Request,
+        @Query('discount') discountRate: number = 10,
+        @Body() createRentalDto: CreateRentalDto
     ) {
-        const rental = await this.rentalService.create(body.discountRate, body.createRentalDto)
+        const rental = await this.rentalService.create(req['user'].sub, discountRate, createRentalDto)
         return {
             data: [rental],
             type: 'rentals'
         }
     }
 
-    @Roles(Role.Member, Role.User)
+    @Roles(Role.User)
     @Put('/return/:id')
     @ApiOperation({ summary: "Return a rental" })
-    @ApiBody({ type: Number })
-    @ApiResponse({ status: 200, description: 'Update rental successfully' })
-    async return(@Body() discountRate: number, @Param('id') id: number) {
-        const returnRental = await this.rentalService.return(discountRate, id)
+    @ApiResponse({ status: 200, description: 'Return rental successfully' })
+    async return(@Param('id') id: number) {
+        const returnRental = await this.rentalService.return(id)
         return {
             data: [returnRental],
             type: 'rentals'
@@ -114,21 +116,26 @@ export class RentalController {
         }
     }
 
-    @Roles(Role.Member, Role.User)
+    @Roles(Role.User)
     @Put('/:id')
     @ApiOperation({ summary: "Update a rental" })
     @ApiParam({ name: 'id', type: Number, description: 'Id of the rental' })
+    @ApiQuery({ name: 'discountRate', type: Number, description: 'The discount rate', required: true })
     @ApiBody({ type: UpdateRentalDto })
     @ApiResponse({ status: 200, description: 'Update rental successfully' })
-    async update(@Param('id') id: number, @Body() updateRentalDto: UpdateRentalDto) {
-        const updatedRental = await this.rentalService.update(id, updateRentalDto)
+    async update(
+        @Param('id') id: number,
+        @Query('discount') discountRate: number = 0,
+        @Body() updateRentalDto: UpdateRentalDto
+    ) {
+        const updatedRental = await this.rentalService.update(id, discountRate, updateRentalDto)
         return {
             data: [updatedRental],
             type: 'rentals'
         }
     }
 
-    @Roles(Role.Librarian)
+    @Roles(Role.User)
     @Delete('/:id')
     @ApiOperation({ summary: "Delete a rental" })
     @ApiParam({ name: 'id', type: Number, description: 'Id of the rental' })

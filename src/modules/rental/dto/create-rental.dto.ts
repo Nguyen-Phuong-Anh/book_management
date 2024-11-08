@@ -4,11 +4,6 @@ import { RentalStatus } from "src/common/enum/rental-status.enum";
 import { BookItem } from "src/modules/book/book-item.entity";
 
 export class CreateRentalDto {
-    @IsNumber()
-    @IsNotEmpty()
-    @ApiProperty({type: Number, description: 'The user id of the rental'})
-    userId: number
-
     @IsNotEmpty()
     @ApiProperty({type: BookItem, isArray: true, description: 'The array of books rent'})
     books: BookItem[]

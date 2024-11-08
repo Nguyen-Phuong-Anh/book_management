@@ -4,11 +4,6 @@ import { IsNotEmpty, IsNumber, IsPositive } from "class-validator"
 export class CreateRentalPaymentDto {
     @IsNumber()
     @IsNotEmpty()
-    @ApiProperty({type: Number, description: 'The librarian id of the rental payment'})
-    librarianId: number
-
-    @IsNumber()
-    @IsNotEmpty()
     @ApiProperty({type: Number, description: 'The rental id of the rental payment'})
     rentalId: number
 

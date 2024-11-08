@@ -48,7 +48,7 @@ export class RentalService {
         return rental
     }
 
-    async create(discountRate: number, createRentalDto: CreateRentalDto) {
+    async create(userId: number, discountRate: number, createRentalDto: CreateRentalDto) {
         const currentDate = new Date()
         const differenceMs = new Date(createRentalDto.dueDate).getTime() - currentDate.getTime();
         const days = Math.floor(differenceMs / (1000 * 60 * 60 * 24));
@@ -62,6 +62,7 @@ export class RentalService {
 
         const rental = this.rentalRepository.create({
             ...createRentalDto,
+            userId: userId,
             creationDate: currentDate,
             fee: fee,
             discountApplied: discountApplied
@@ -82,7 +83,7 @@ export class RentalService {
                     }
                 }
     
-                await transactionalEntityManager.save(Rental, rental);
+                await transactionalEntityManager.save(rental);
             });
 
             return rental;
@@ -91,7 +92,7 @@ export class RentalService {
         }
     }
 
-    async update(id: number, updateRentalDto: UpdateRentalDto) {
+    async update(id: number, discountRate: number, updateRentalDto: UpdateRentalDto) {
         const rental = await this.rentalRepository.findOne({ where: { id } })
         if (!rental) {
             throw new NotFoundException(`Rental with ID ${id} not found`)
@@ -109,18 +110,37 @@ export class RentalService {
             if(days > 3) {
                 fee = parseInt(process.env.RENTAL_FEE) * (days - 3)
             }
-
+            rental.dueDate = updateRentalDto.dueDate
             rental.fee = fee
+            rental.discountApplied = (discountRate/100) * fee
         }
 
         if(updateRentalDto?.books) {
-            rental.books = [...rental.books, ...updateRentalDto.books]
+            rental.books.push(...updateRentalDto.books);
+            try {
+                await this.dataSource.transaction(async (transactionalEntityManager) => {
+                    for (const bookItem of updateRentalDto.books) {
+                        const result = await this.dataSource
+                            .createQueryBuilder()
+                            .update(Book)
+                            .set({ numberOfCopy: () => `numberOfCopy - ${bookItem.quantity}` })
+                            .where("id = :id", { id: bookItem.id })
+                            .execute();
+            
+                        if (result.affected === 0) {
+                            throw new Error(`Book with id ${bookItem.id} not found or has insufficient quantity`);
+                        }
+                    }
+        
+                    await transactionalEntityManager.delete(Rental, id);
+                });
+    
+            } catch (error) {
+                throw new InternalServerErrorException(error)
+            }
         }
-
+    
         try {
-            Object.assign(rental, {
-                ...updateRentalDto
-            })
             return await this.rentalRepository.save(rental)
         } catch (error) {
             console.log(error)
@@ -143,7 +163,7 @@ export class RentalService {
         }
     }
 
-    async return(discountRate: number, id: number) {
+    async return(id: number) {
         const rental = await this.rentalRepository.findOne({ where: { id } })
         if (!rental) {
             throw new NotFoundException(`Rental with ID ${id} not found`)
@@ -157,10 +177,23 @@ export class RentalService {
         const days = Math.floor(differenceMs / (1000 * 60 * 60 * 24));
         rental.fine = Number(process.env.FINE_PER_DAY) * days
 
-        rental.discountApplied = (discountRate / 100) * rental.fee
-        
         try {
-            return await this.rentalRepository.save(rental)
+            await this.dataSource.transaction(async (transactionalEntityManager) => {
+                for (const bookItem of rental.books) {
+                    const result = await this.dataSource
+                        .createQueryBuilder()
+                        .update(Book)
+                        .set({ numberOfCopy: () => `numberOfCopy + ${bookItem.quantity}` })
+                        .where("id = :id", { id: bookItem.id })
+                        .execute();
+        
+                    if (result.affected === 0) {
+                        throw new Error(`Book with id ${bookItem.id} not found or has insufficient quantity`);
+                    }
+                }
+                await transactionalEntityManager.save(rental);
+            });
+            return rental;
         } catch (error) {
             console.log(error)
             throw new InternalServerErrorException('Failed to return rental')
@@ -174,19 +207,28 @@ export class RentalService {
         } else if(rental.status !== RentalStatus.Pending) {
             throw new Error(`Rentals not pending are not allowed to delete`)
         }
-        for (const bookItem of rental.books) {
-            const result = await this.dataSource
-                .createQueryBuilder()
-                .update(Book)
-                .set({ numberOfCopy: () => `numberOfCopy + ${bookItem.quantity}` })
-                .where("id = :id", { id: bookItem.id })
-                .execute();
 
-            if (result.affected === 0) {
-                throw new Error(`Book with id ${bookItem.id} not found or has insufficient quantity`);
-            }
+        try {
+            await this.dataSource.transaction(async (transactionalEntityManager) => {
+                for (const bookItem of rental.books) {
+                    const result = await this.dataSource
+                        .createQueryBuilder()
+                        .update(Book)
+                        .set({ numberOfCopy: () => `numberOfCopy + ${bookItem.quantity}` })
+                        .where("id = :id", { id: bookItem.id })
+                        .execute();
+        
+                    if (result.affected === 0) {
+                        throw new Error(`Book with id ${bookItem.id} not found or has insufficient quantity`);
+                    }
+                }
+    
+                await transactionalEntityManager.delete(Rental, id);
+            });
+
+        } catch (error) {
+            throw new InternalServerErrorException(error)
         }
-        await this.rentalRepository.delete(id)
     }
 
     @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)

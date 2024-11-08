@@ -9,6 +9,7 @@ import { RoleGuard } from 'src/common/guards/role.guard';
 import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 @Controller('rental-payments')
+@UseGuards(RoleGuard)
 @ApiTags('rental-payments')
 export class RentalPaymentController {
     constructor(
@@ -17,7 +18,6 @@ export class RentalPaymentController {
     ) { }
 
     @Roles(Role.Librarian, Role.Member, Role.User)
-    @UseGuards(RoleGuard)
     @SetMetadata('isCacheable', true)
     @Get('/:id')
     @ApiOperation({ summary: "Find rental payment with the given id" })
@@ -36,7 +36,6 @@ export class RentalPaymentController {
     }
 
     @Roles(Role.Librarian)
-    @UseGuards(RoleGuard)
     @SetMetadata('isCacheable', true)
     @Get()
     @ApiOperation({ summary: "Find all rental payments" })
@@ -73,7 +72,6 @@ export class RentalPaymentController {
     }
 
     @Roles(Role.User, Role.Member)
-    @UseGuards(RoleGuard)
     @Post()
     @ApiBody({ type: CreateRentalPaymentDto })
     @ApiOperation({ summary: "Create a new rental payment" })

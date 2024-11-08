@@ -8,9 +8,6 @@ export class RentalPayment {
     id: number
 
     @Column()
-    librarianId: number
-
-    @Column()
     rentalId: number
 
     @Column()
@@ -20,10 +17,6 @@ export class RentalPayment {
         type: 'real'
     })
     amount: number
-
-    @ManyToOne(() => User, user => user.id)
-    @JoinColumn({ name: 'librarianId'})
-    librarian: User
 
     @OneToOne(() => Rental, rental => rental.id)
     @JoinColumn({ name: 'rentalId'})
