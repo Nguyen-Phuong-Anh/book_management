@@ -8,8 +8,9 @@ import { Roles } from 'src/common/decorators/role.decorator';
 import { Role } from 'src/common/enum/role.enum';
 import { RoleGuard } from 'src/common/guards/role.guard';
 import { UserService } from '../user/user.service';
-import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 
+@ApiBearerAuth('access-token')
 @UseGuards(RoleGuard)
 @Controller('memberships')
 @ApiTags('membership')

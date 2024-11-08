@@ -6,8 +6,9 @@ import { RoleGuard } from 'src/common/guards/role.guard';
 import { Roles } from 'src/common/decorators/role.decorator';
 import { api_ver1 } from 'src/shared/constants';
 import { CreateMembershipPaymentDto } from './dto/create-membership-payment.dto';
-import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 
+@ApiBearerAuth('access-token')
 @UseGuards(RoleGuard)
 @Controller('membership-payments')
 @ApiTags('membership-payment')

@@ -6,8 +6,9 @@ import { Roles } from 'src/common/decorators/role.decorator';
 import { Role } from 'src/common/enum/role.enum';
 import { api_ver1 } from 'src/shared/constants';
 import { Reflector } from '@nestjs/core';
-import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 
+@ApiBearerAuth('access-token')
 @Controller('books')
 @ApiTags('book')
 export class BookController {

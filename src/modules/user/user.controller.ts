@@ -1,14 +1,16 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Req, SetMetadata, UseGuards } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
-import { ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Reflector } from '@nestjs/core';
 import { CreateUserDto } from './dto/create-user.dto';
 import { Role } from 'src/common/enum/role.enum';
 import { Roles } from 'src/common/decorators/role.decorator';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { RoleGuard } from 'src/common/guards/role.guard';
 
 @Controller('users')
+@ApiBearerAuth('access-token')
 @ApiTags('users')
 export class UserController {
     constructor(
@@ -17,6 +19,7 @@ export class UserController {
     ) {}
 
     @Roles(Role.Admin)
+    @UseGuards(RoleGuard)
     @Put('/update/:id')
     @ApiOperation({ summary: "Update an user"})
     @ApiParam({ name: 'id', type: Number, description: 'Id of the user'})
@@ -60,6 +63,7 @@ export class UserController {
     }
 
     @Roles(Role.Admin)
+    @UseGuards(RoleGuard)
     @Post('/create')
     @ApiOperation({ summary: "Create new user"})
     @ApiBody({ type: CreateUserDto })
@@ -73,6 +77,7 @@ export class UserController {
     }
 
     @Roles(Role.Admin)
+    @UseGuards(RoleGuard)
     @Delete('/:id')
     @ApiOperation({ summary: "Delete an user"})
     @ApiParam({ name: 'id', type: Number, description: 'Id of the user'})

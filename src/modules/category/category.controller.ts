@@ -5,9 +5,10 @@ import { UpdateCategoryDto } from './dto/update-category.dto';
 import { Role } from 'src/common/enum/role.enum';
 import { Roles } from 'src/common/decorators/role.decorator';
 import { api_ver1 } from 'src/shared/constants';
-import { ApiOperation, ApiQuery, ApiResponse, ApiParam, ApiBody, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiQuery, ApiResponse, ApiParam, ApiBody, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { Reflector } from '@nestjs/core';
 
+@ApiBearerAuth('access-token')
 @Controller('categories')
 @ApiTags('category')
 export class CategoryController {

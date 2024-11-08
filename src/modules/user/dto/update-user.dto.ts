@@ -1,4 +1,4 @@
-import { IsEmail, IsOptional, IsString } from "@nestjs/class-validator"
+import { IsArray, IsEmail, IsOptional, IsString } from "@nestjs/class-validator"
 import { ApiProperty } from "@nestjs/swagger"
 import { IsUnique } from "src/common/decorators/is-unique.decorator"
 import { Role } from "src/common/enum/role.enum"
@@ -21,6 +21,8 @@ export class UpdateUserDto {
     @ApiProperty({ type: String, description: 'Password of the user' })
     password?: string
     
+    @IsArray()
     @IsOptional()
+    @ApiProperty({ enum: Role, isArray: true, description: 'Roles of the user' })
     roles: Role[]
 }

@@ -4,11 +4,12 @@ import { CreateRentalDto } from './dto/create-rental.dto';
 import { Reflector } from '@nestjs/core';
 import { api_ver1 } from 'src/shared/constants';
 import { UpdateRentalDto } from './dto/update-rental.dto';
-import { ApiOperation, ApiParam, ApiResponse, ApiQuery, ApiBody, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiParam, ApiResponse, ApiQuery, ApiBody, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { Roles } from 'src/common/decorators/role.decorator';
 import { Role } from 'src/common/enum/role.enum';
 import { RoleGuard } from 'src/common/guards/role.guard';
 
+@ApiBearerAuth('access-token')
 @Controller('rentals')
 @UseGuards(RoleGuard)
 @ApiTags('rental')
